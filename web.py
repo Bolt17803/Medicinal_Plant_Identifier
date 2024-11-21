@@ -41,9 +41,10 @@ def assign_class_to_image(test_embedding, mean_embeddings):
     best_class = np.argmax(similarities)  # Class with the highest similarity
     return best_class
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device=torch.device('cpu')
 model = CNN().to(device)
-model_save_path = "model_weights.pth"
+model_save_path = "model_weights_cpu.pth"
 model.load_state_dict(torch.load(model_save_path))
 model = model.to(device)
 model.eval()
@@ -67,8 +68,8 @@ def main():
         image_tensor = preprocess_image(image)
 
         # Move the image to the device
-        if torch.cuda.is_available():
-            image_tensor = image_tensor.cuda()
+        # if torch.cuda.is_available():
+        #     image_tensor = image_tensor.cuda()
 
         # Get the model's output
         model.eval()  # Set the model to evaluation mode
