@@ -6,6 +6,7 @@ gtts
 torchvision
 matplotlib
 scikit-image
+scikit-learn
 torchvision
 nltk
 setuptools>=68.2.2
