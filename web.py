@@ -45,7 +45,7 @@ def assign_class_to_image(test_embedding, mean_embeddings):
 device=torch.device('cpu')
 model = CNN().to(device)
 model_save_path = "model_weights_cpu.pth"
-model.load_state_dict(torch.load(model_save_path))
+model.load_state_dict(torch.load(model_save_path, map_location=torch.device('cpu')))
 model = model.to(device)
 model.eval()
 print("Model weights loaded successfully.")
