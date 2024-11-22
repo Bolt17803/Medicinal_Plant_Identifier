@@ -65,7 +65,103 @@ def get_medicinal_info_from_google(plant_name):
         return results[0]  # Return the URL of the top search result
     else:
         return "No results found."
-    
+
+def fetch_webpage(link):
+    # Set custom headers to mimic a browser
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    }
+    response = requests.get(link, headers=headers)
+
+    if response.status_code == 200:
+        return response.text
+    else:
+        print(f"Failed to fetch the webpage. Status code: {response.status_code}")
+        return None
+
+# def extract_medical_info(page_content):
+#     # Parse the HTML content
+#     soup = BeautifulSoup(page_content, 'html.parser')
+
+#     # Define common medical keywords
+#     medical_keywords = ["health", "medication", "treatment", "disease", "side effect", "symptoms", "doctor", "cure", "prescription"]
+
+#     # Extract all text from the page
+#     text = soup.get_text()
+
+#     # Filter text based on medical keywords
+#     relevant_text = []
+#     for line in text.split('\n'):
+#         if any(keyword.lower() in line.lower() for keyword in medical_keywords):
+#             relevant_text.append(line.strip())
+
+#     # Return cleaned-up relevant content
+#     return "\n".join(relevant_text)
+def extract_medical_info(page_content):
+    from collections import defaultdict
+
+    # Parse the HTML content
+    soup = BeautifulSoup(page_content, 'html.parser')
+
+    # Define common medical keywords
+    medical_keywords = ["health", "medication", "treatment", "disease", "side effect", "symptoms", "doctor", "cure", "prescription"]
+
+    # Store results as a dictionary of subheadings and their corresponding text
+    medical_info = defaultdict(list)
+
+    # Identify heading tags and their corresponding content
+    for heading in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']):
+        # Extract heading text
+        heading_text = heading.get_text(strip=True)
+
+        # Find the next sibling elements to gather the associated content
+        content = []
+        sibling = heading.find_next_sibling()
+
+        while sibling and sibling.name not in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+            if sibling.name in ['p', 'ul', 'ol', 'div'] and sibling.get_text(strip=True):
+                content.append(sibling.get_text(strip=True))
+            sibling = sibling.find_next_sibling()
+
+        # Filter content based on medical keywords
+        filtered_content = [
+            line for line in content if any(keyword.lower() in line.lower() for keyword in medical_keywords)
+        ]
+
+        # Store the heading and its relevant content
+        if filtered_content:
+            medical_info[heading_text].extend(filtered_content)
+
+    # Format the output as a string with headings and text
+    output = ""
+    for heading, texts in medical_info.items():
+        output += f"\n{heading}:\n"
+        output += "\n".join(f"- {text}" for text in texts)
+        output += "\n"
+
+    return output.strip()
+
+
+def trigger(plant_name):
+    link = get_medicinal_info_from_google(plant_name)
+
+    if link:
+        print(f"Top Google result: {link}")
+        page_content = fetch_webpage(link)
+
+        if page_content:
+            medical_info = extract_medical_info(page_content)
+
+            if medical_info:
+                print("got few text")
+                return medical_info
+            else:
+                return "No relevant medical information found on the page."
+        else:
+            return "Failed to fetch or parse the webpage."
+    else:
+        return "No search results found."
+
 def get_data(plant_name):
     link=get_medicinal_info_from_google(plant_name)
     print(link)
@@ -157,6 +253,10 @@ def main():
             st.write(f"Precautions: {precautions}")
 
         st.write(f'Check this link for more plant info:{link}')
+
+        info = trigger(name_mapper[assigned_class])
+        st.write(f'Few Features of the Plant: \n {info}')
+
 
 
 if __name__ == "__main__":
